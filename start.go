@@ -19,7 +19,7 @@ func call(funcname string, fargs []string) {
 	defer callRecovery(funcname, fargs)
 
 	callable := reflect.ValueOf(funcname)
-	var cargs []reflect.Value
+	cargs := make([]reflect.Value, len(fargs))
 
 	for idx, val := range fargs {
 		cargs[idx] = reflect.ValueOf(val)
