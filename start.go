@@ -2,9 +2,18 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strconv"
 	"reflect"
 )
+
+func callRecovery(funcname string, fargs []string) {
+	if r := recover(); r != nil {
+		fmt.Printf("Calling function %s with args %v failed.\n", funcname, fargs)
+		fmt.Println("Please ensure the function exists and takes the supplied arguments.")
+	}
+}
+
 
 func call(funcname string, fargs []string) {
 	defer callRecovery(funcname, fargs)
