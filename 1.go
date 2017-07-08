@@ -1,51 +1,59 @@
 package main
 
 import (
-	"sync"
+    "sync"
 )
 
 func getMultiples(mul, limit int, wg *sync.WaitGroup) <-chan int {
-	c := make(chan int)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for i := 0; i < limit; i += mul {
-			c <- i
-		}
-	}()
-	return c
+    c := make(chan int)
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        for i := 0; i < limit; i += mul {
+            c <- i
+        }
+    }()
+    return c
 }
 
 func fanInMultipliers(multia, multib <-chan int) <-chan int {
-	c := make(chan int)
-	go func() { for { c <- <-multia } }()
-	go func() { for { c <- <-multib } }()
-	return c
+    c := make(chan int)
+    go func() {
+        for {
+            c <- <-multia
+        }
+    }()
+    go func() {
+        for {
+            c <- <-multib
+        }
+    }()
+    return c
 }
 
 func sumMultiples(mula, mulb, limit int) int {
-	var total int
-	var wg sync.WaitGroup
-	c := fanInMultipliers(
-		getMultiples(mula, limit, &wg),
-		getMultiples(mulb, limit, &wg),
-	)
-	d := getMultiples(mula * mulb, limit, &wg)
+    var total int
+    var wg sync.WaitGroup
+    c := fanInMultipliers(
+        getMultiples(mula, limit, &wg),
+        getMultiples(mulb, limit, &wg),
+    )
+    d := getMultiples(mula*mulb, limit, &wg)
 
-	go func() {
-		for {
-			select {
-			case x := <-c:
-				total += x
-			case y := <-d:
-				total -= y
-			}
-		}
-	}()
+    go func() {
+        for {
+            select {
+            case x := <-c:
+                total += x
+            case y := <-d:
+                total -= y
+            }
+        }
+    }()
 
-	wg.Wait()
+    wg.Wait()
 
-	return total
+    return total
 }
 
 /*
@@ -53,5 +61,5 @@ func sumMultiples(mula, mulb, limit int) int {
 	Find the sum of all the multiples of 3 or 5 below 1000.
 */
 func (s Solution) Problem1(mula, mulb, limit int) int {
-	return sumMultiples(mula, mulb, limit)
+    return sumMultiples(mula, mulb, limit)
 }
