@@ -37,7 +37,7 @@ func argConvertor(argValue reflect.Value, cargType reflect.Type) interface{} {
 }
 
 
-func call(funcname string, fargs []interface{}) interface{} {
+func call(funcname string, fargs []interface{}) []reflect.Value {
 	defer callRecovery(funcname, fargs)
 
 	callable := reflect.ValueOf(sol).MethodByName(funcname)
@@ -71,5 +71,7 @@ func main() {
 	funcname := "Problem" + strconv.Itoa(problem)
 	solution := call(funcname, parseArgs(flag.Args()))
 
-	fmt.Printf("Value: %s\n", solution)
+	for i := 0; i<len(solution); i++ {
+		fmt.Printf("Solution part %d: %s\n", i, solution[i])
+	}
 }
