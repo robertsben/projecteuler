@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -46,8 +45,6 @@ func sumMultiples(mula, mulb, limit int) int {
 
 	wg.Wait()
 
-	fmt.Println(total)
-
 	return total
 }
 
@@ -56,7 +53,5 @@ func sumMultiples(mula, mulb, limit int) int {
 	Find the sum of all the multiples of 3 or 5 below 1000.
 */
 func (s Solution) Problem1(mula, mulb, limit int) int {
-	val := sumMultiples(mula, mulb, limit)
-	fmt.Println(val)
-	return val
+	return sumMultiples(mula, mulb, limit)
 }
