@@ -7,25 +7,60 @@ import (
 	"reflect"
 )
 
-func callRecovery(funcname string, fargs []string) {
+type Solution struct {}
+var sol Solution
+
+func callRecovery(funcname string, fargs []interface{}) {
 	if r := recover(); r != nil {
-		fmt.Printf("Calling function %s with args %v failed.\n", funcname, fargs)
+		fmt.Printf("Calling function %s with args %v failed because: ", funcname, fargs)
+		fmt.Println(r)
 		fmt.Println("Please ensure the function exists and takes the supplied arguments.")
 	}
 }
 
+func argConvertor(argValue reflect.Value, cargType reflect.Type) interface{} {
+	var conversion interface{}
+	var err error
 
-func call(funcname string, fargs []string) {
-	defer callRecovery(funcname, fargs)
-
-	callable := reflect.ValueOf(funcname)
-	cargs := make([]reflect.Value, len(fargs))
-
-	for idx, val := range fargs {
-		cargs[idx] = reflect.ValueOf(val)
+	switch argValue.Kind(); cargType.Kind() {
+	case reflect.String, reflect.Int:
+		conversion, err = strconv.Atoi(argValue.String())
+	default:
+		conversion, err = argValue.Convert(cargType), nil
 	}
 
-	callable.Call(cargs)
+	if err != nil {
+		panic(err)
+	}
+
+	return conversion
+}
+
+
+func call(funcname string, fargs []interface{}) interface{} {
+	defer callRecovery(funcname, fargs)
+
+	callable := reflect.ValueOf(sol).MethodByName(funcname)
+	cargs := make([]reflect.Value, len(fargs))
+
+	for idx := range fargs {
+		cargs[idx] = reflect.ValueOf(
+			argConvertor(
+				reflect.ValueOf(fargs[idx]),
+				callable.Type().In(idx),
+			),
+		)
+	}
+
+	return callable.Call(cargs)
+}
+
+func parseArgs(args []string) []interface{} {
+	fargs := make([]interface{}, len(args))
+	for i, v := range args {
+		fargs[i] = v
+	}
+	return fargs
 }
 
 func main() {
@@ -34,5 +69,7 @@ func main() {
 	flag.Parse()
 
 	funcname := "Problem" + strconv.Itoa(problem)
-	call(funcname, flag.Args())
+	solution := call(funcname, parseArgs(flag.Args()))
+
+	fmt.Printf("Value: %s\n", solution)
 }
