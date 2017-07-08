@@ -4,48 +4,48 @@ import (
     "sync"
 )
 
-func getMultiples(mul, limit int, wg *sync.WaitGroup) <-chan int {
-    c := make(chan int)
+func getMultiples(multiple, limit int, wg *sync.WaitGroup) <-chan int {
+    channel := make(chan int)
     wg.Add(1)
     go func() {
         defer wg.Done()
-        for i := 0; i < limit; i += mul {
-            c <- i
+        for i := 0; i < limit; i += multiple {
+            channel <- i
         }
     }()
-    return c
+    return channel
 }
 
-func fanInMultipliers(multia, multib <-chan int) <-chan int {
-    c := make(chan int)
+func fanInMultipliers(multiplierA, multiplierB <-chan int) <-chan int {
+    channel := make(chan int)
     go func() {
         for {
-            c <- <-multia
+            channel <- <-multiplierA
         }
     }()
     go func() {
         for {
-            c <- <-multib
+            channel <- <-multiplierB
         }
     }()
-    return c
+    return channel
 }
 
-func sumMultiples(mula, mulb, limit int) int {
+func sumMultiples(multipleA, multipleB, limit int) int {
     var total int
     var wg sync.WaitGroup
-    c := fanInMultipliers(
-        getMultiples(mula, limit, &wg),
-        getMultiples(mulb, limit, &wg),
+    muliplesChannel := fanInMultipliers(
+        getMultiples(multipleA, limit, &wg),
+        getMultiples(multipleB, limit, &wg),
     )
-    d := getMultiples(mula*mulb, limit, &wg)
+    duplicatesChannel := getMultiples(multipleA*multipleB, limit, &wg)
 
     go func() {
         for {
             select {
-            case x := <-c:
+            case x := <-muliplesChannel:
                 total += x
-            case y := <-d:
+            case y := <-duplicatesChannel:
                 total -= y
             }
         }
@@ -60,6 +60,6 @@ func sumMultiples(mula, mulb, limit int) int {
 	If we list all the natural numbers below 10 that are multiples of 3 or 5, we get 3, 5, 6 and 9. The sum of these multiples is 23.
 	Find the sum of all the multiples of 3 or 5 below 1000.
 */
-func (s Solution) Problem1(mula, mulb, limit int) int {
-    return sumMultiples(mula, mulb, limit)
+func (s Solution) Problem1(multipleA, multipleB, limit int) int {
+    return sumMultiples(multipleA, multipleB, limit)
 }

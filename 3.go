@@ -4,54 +4,54 @@ import (
     "math"
 )
 
-func findFactors(c, quit chan int, number int) {
+func findFactors(channel, quit chan int, number int) {
     for i := 2; i < int(math.Sqrt(float64(number))); i++ {
         if 0 == math.Mod(float64(number), float64(i)) {
-            c <- i
-            c <- number / i
+            channel <- i
+            channel <- number / i
         }
     }
     quit <- 0
 }
 
 func isPrime(number int) bool {
-    c := make(chan int)
-    quit := make(chan int)
+    factorChannel := make(chan int)
+    quitChannel := make(chan int)
     isPrime := true
 
     go func() {
         for {
             select {
-            case <-c:
+            case <-factorChannel:
                 isPrime = false
-            case <-quit:
+            case <-quitChannel:
                 return
             }
         }
     }()
 
-    findFactors(c, quit, number)
+    findFactors(factorChannel, quitChannel, number)
 
     return isPrime
 }
 
 func findMaxPrimeFactor(number int) int {
-    c := make(chan int)
+    channel := make(chan int)
     quit := make(chan int)
     max := 1
     go func() {
         for {
             select {
-            case x := <-c:
-                if x > max && isPrime(x) {
-                    max = x
+            case factor := <-channel:
+                if factor > max && isPrime(factor) {
+                    max = factor
                 }
             case <-quit:
                 return
             }
         }
     }()
-    findFactors(c, quit, number)
+    findFactors(channel, quit, number)
     return max
 }
 

@@ -4,11 +4,11 @@ import (
     "math"
 )
 
-func fibonacci(c, quit chan int) {
+func fibonacci(channel, quit chan int) {
     x, y := 0, 1
     for {
         select {
-        case c <- x:
+        case channel <- x:
             x, y = y, x+y
         case <-quit:
             return
@@ -17,20 +17,20 @@ func fibonacci(c, quit chan int) {
 }
 
 func fibber(limit int) int {
-    c := make(chan int)
+    channel := make(chan int)
     quit := make(chan int)
     sum := 0
     go func() {
-        for x := range c {
-            if x > limit {
+        for fibElem := range channel {
+            if fibElem > limit {
                 quit <- 0
             }
-            if 0 == math.Mod(float64(x), 2) {
-                sum += x
+            if 0 == math.Mod(float64(fibElem), 2) {
+                sum += fibElem
             }
         }
     }()
-    fibonacci(c, quit)
+    fibonacci(channel, quit)
     return sum
 }
 
