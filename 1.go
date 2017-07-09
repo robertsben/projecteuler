@@ -18,16 +18,8 @@ func getMultiples(multiple, limit int, wg *sync.WaitGroup) <-chan int {
 
 func fanInMultipliers(multiplierA, multiplierB <-chan int) <-chan int {
     channel := make(chan int)
-    go func() {
-        for {
-            channel <- <-multiplierA
-        }
-    }()
-    go func() {
-        for {
-            channel <- <-multiplierB
-        }
-    }()
+    go func() { for { channel <- <-multiplierA } }()
+    go func() { for { channel <- <-multiplierB } }()
     return channel
 }
 
