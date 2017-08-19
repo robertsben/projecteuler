@@ -2,7 +2,7 @@ package main
 
 import (
     "math"
-    "fmt"
+    "sync"
 )
 
 func fillRange(min, max int) []int {
@@ -13,11 +13,11 @@ func fillRange(min, max int) []int {
     return rangeContents
 }
 
-func generateRangeChunks(chunkRangeLimits []int) []interface{} {
-    var rangeChunks []interface{}
+func generateRangeChunks(chunkRangeLimits []int) []int {
+    var rangeChunks []int
 
     for i := 0; i < len(chunkRangeLimits)-1; i++ {
-        rangeChunks = append(rangeChunks, fillRange(chunkRangeLimits[i], chunkRangeLimits[i+1]))
+        rangeChunks = addValesToSlice(rangeChunks, fillRange(chunkRangeLimits[i], chunkRangeLimits[i+1]))
     }
 
     return rangeChunks
@@ -28,25 +28,115 @@ func splitRange(min, max int) []int {
     return []int{min, lowerHalfMax, max}
 }
 
-func addValesToSlice(slice []interface{}, values []interface{}) []interface{} {
+func addValesToSlice(slice []int, values []int) []int {
     for _, val := range values {
         slice = append(slice, val)
     }
     return slice
 }
 
-func rangeChunker(min, max int) []interface{} {
-    var ranges []interface{}
+/*
+    Given the min and max number in a range, fire sets of 
+ */
+func rangeChunker(rangeChannel chan []int, min, max int, wg *sync.WaitGroup) {
+    defer wg.Done()
+
     chunkRangeLimits := splitRange(min, max)
 
     if max - min <= 25 {
-        ranges = addValesToSlice(ranges, generateRangeChunks(chunkRangeLimits))
+        rangeChannel <- generateRangeChunks(chunkRangeLimits)
+        return
     } else {
         for i := 0; i < 2; i++ {
-            ranges = addValesToSlice(ranges, rangeChunker(chunkRangeLimits[i], chunkRangeLimits[i+1]))
+            wg.Add(1)
+            go rangeChunker(rangeChannel, chunkRangeLimits[i], chunkRangeLimits[i+1], wg)
         }
     }
-    return ranges
+}
+
+/*
+    Split the range between min and max into chunks
+ */
+func splitRangeToChunks(min, max int) [][]int {
+    rangeChannel := make(chan []int)
+    var wg sync.WaitGroup
+    var rangeChunks [][]int
+    go func() {
+        for {
+            select {
+            case rangeChunk := <-rangeChannel:
+                rangeChunks = append(rangeChunks, rangeChunk)
+            }
+        }
+    }()
+    wg.Add(1)
+    go rangeChunker(rangeChannel, min, max+1, &wg)
+    wg.Wait()
+    return rangeChunks
+}
+
+/*
+    Get max and min of n-digit numbers, where n = length
+ */
+func getNumberRangeOfDigitLength(length int) (min, max int) {
+    return int(math.Pow10(length-1)), int(math.Pow10(length) - 1)
+}
+
+/* e.g. 123456 -> 654321 */
+func reverseNumber(number int) int {
+    reversed := 0
+    for number > 0 {
+        remainder := number % 10
+        reversed *= 10
+        reversed += remainder
+        number /= 10
+    }
+    return reversed
+}
+
+func isPalindrome(number int) bool {
+    return number == reverseNumber(number)
+}
+
+func calculateAllMultiples(multipleChannel chan int, rangeA, rangeB []int, completeWg *sync.WaitGroup) {
+    defer completeWg.Done()
+    for _, factorA := range rangeA {
+        for _, factorB := range rangeB {
+            multipleChannel <- factorA * factorB
+        }
+    }
+}
+
+func multiplyRangesBy(multipleRange []int, ranges [][]int, multipleChannel chan int, completeWg *sync.WaitGroup) {
+    defer completeWg.Done()
+    var wg sync.WaitGroup
+    for _, numRange := range ranges {
+        wg.Add(1)
+        go calculateAllMultiples(multipleChannel, multipleRange, numRange, &wg)
+    }
+    wg.Wait()
+}
+
+func findPalindromicMultiples(rangesA, rangesB [][]int) int {
+    multipleChannel := make(chan int)
+    var wg sync.WaitGroup
+    maximumPalindrome := 0
+    go func() {
+        for {
+            select {
+            case multiple := <-multipleChannel:
+                if multiple > maximumPalindrome && isPalindrome(multiple) {
+                    maximumPalindrome = multiple
+                }
+            }
+        }
+    }()
+    for _, numRangeA := range rangesA {
+        wg.Add(1)
+        go multiplyRangesBy(numRangeA, rangesB, multipleChannel, &wg)
+    }
+    wg.Wait()
+    return maximumPalindrome
 }
 
 /*
@@ -55,11 +145,12 @@ func rangeChunker(min, max int) []interface{} {
     Find the largest palindrome made from the product of two 3-digit numbers.
 */
 func (s Solution) Problem4(digitCountA, digitCountB int) int {
-    minValA := int(math.Pow10(digitCountA-1))
-    maxValA := int(math.Pow10(digitCountA) - 1)
-    minValB := int(math.Pow10(digitCountB-1))
-    //maxValB := 10^digitCountB - 1
-    fmt.Println(rangeChunker(minValA, maxValA+1))
-    return minValB
+    minValA, maxValA := getNumberRangeOfDigitLength(digitCountA)
+    minValB, maxValB := getNumberRangeOfDigitLength(digitCountB)
+    aDigitNumberRangeChunks := splitRangeToChunks(minValA, maxValA)
+    bDigitNumberRangeChunks := splitRangeToChunks(minValB, maxValB)
+    maxPalindrome := findPalindromicMultiples(aDigitNumberRangeChunks, bDigitNumberRangeChunks)
+
+    return maxPalindrome
 }
 
