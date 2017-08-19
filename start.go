@@ -5,6 +5,7 @@ import (
     "fmt"
     "strconv"
     "reflect"
+    "time"
 )
 
 type Solution struct{}
@@ -69,9 +70,12 @@ func main() {
     flag.Parse()
 
     funcname := "Problem" + strconv.Itoa(problem)
+    start := time.Now()
     solution := call(funcname, parseArgs(flag.Args()))
+    execTime := time.Since(start)
 
     for i := 0; i < len(solution); i++ {
         fmt.Printf("Solution part %d: %s\n", i, solution[i])
     }
+    fmt.Printf("Calculation took %v to complete\n", execTime)
 }
