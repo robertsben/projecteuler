@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func testProblem2(t *testing.T) {
+func TestProblem2(t *testing.T) {
     actual := sol.Problem2(4000000)
     expected := 4613732
     if actual != expected {

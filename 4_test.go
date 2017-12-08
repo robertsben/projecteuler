@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func testProblem4(t *testing.T) {
+func TestProblem4(t *testing.T) {
     inputA, inputB := 3, 3
     actual := sol.Problem4(inputA, inputB)
     expected := 906609
@@ -11,7 +11,7 @@ func testProblem4(t *testing.T) {
     }
 }
 
-func testProblem4anotherInput(t *testing.T) {
+func TestProblem4anotherInput(t *testing.T) {
     inputA, inputB := 2, 2
     actual := sol.Problem4(inputA, inputB)
     expected := 9009

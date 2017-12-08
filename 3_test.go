@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func testProblem3(t *testing.T) {
+func TestProblem3(t *testing.T) {
     input := 600851475143
     actual := sol.Problem3(input)
     expected := 6857
