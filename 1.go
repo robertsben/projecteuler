@@ -4,46 +4,55 @@ import (
     "sync"
 )
 
-func getMultiples(multiple, limit int, wg *sync.WaitGroup) <-chan int {
+func getMultiples(multiple, limit int) <-chan int {
     channel := make(chan int)
-    wg.Add(1)
     go func() {
-        defer wg.Done()
         for i := 0; i < limit; i += multiple {
             channel <- i
         }
+        close(channel)
     }()
     return channel
 }
 
-func fanInMultipliers(multiplierA, multiplierB <-chan int) <-chan int {
-    channel := make(chan int)
-    go func() { for { channel <- <-multiplierA } }()
-    go func() { for { channel <- <-multiplierB } }()
-    return channel
-}
-
-func sumMultiples(multipleA, multipleB, limit int) int {
-    var total int
+func fanInChannels(channels ...<-chan int) <-chan int {
     var wg sync.WaitGroup
-    muliplesChannel := fanInMultipliers(
-        getMultiples(multipleA, limit, &wg),
-        getMultiples(multipleB, limit, &wg),
-    )
-    duplicatesChannel := getMultiples(multipleA*multipleB, limit, &wg)
+    out := make(chan int)
+
+    for _, c := range channels {
+        go func(x <-chan int) {
+            for incoming := range x {
+                out <- incoming
+            }
+            wg.Done()
+        }(c)
+    }
+
+    wg.Add(len(channels))
 
     go func() {
-        for {
-            select {
-            case x := <-muliplesChannel:
-                total += x
-            case y := <-duplicatesChannel:
-                total -= y
-            }
-        }
+        wg.Wait()
+        close(out)
     }()
 
-    wg.Wait()
+    return out
+}
+
+
+func sumMultiples(multipleA, multipleB, limit int) int {
+    multiplesChannel := fanInChannels(
+        getMultiples(multipleA, limit),
+        getMultiples(multipleB, limit),
+    )
+    duplicatesChannel := getMultiples(multipleA*multipleB, limit)
+    total := 0
+
+    for multiple := range multiplesChannel {
+        total += multiple
+    }
+    for duplicate := range duplicatesChannel {
+        total -= duplicate
+    }
 
     return total
 }
