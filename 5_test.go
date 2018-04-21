@@ -3,10 +3,19 @@ package main
 import "testing"
 
 func TestProblem5ExampleSolution(t *testing.T) {
-	exampleRange := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	input := 10
 	expected := 2520
-	solution := sol.Problem5(exampleRange)
+	solution := sol.Problem5(input)
 	if solution != expected {
-		t.Errorf("For %v expected %v, got %v", exampleRange, expected, solution)
+		t.Errorf("For %v expected %v, got %v", input, expected, solution)
+	}
+}
+
+func TestProblem5ActualSolution(t *testing.T) {
+	input := 20
+	expected := 232792560
+	solution := sol.Problem5(input)
+	if solution != expected {
+		t.Errorf("For %v expected %v, got %v", input, expected, solution)
 	}
 }
