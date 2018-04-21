@@ -8,7 +8,7 @@ func isDivisible(n, max int) bool {
 }
 
 func searchForDivisible(max int) int {
-	for i := max;; i++ {
+	for i := max;; i+=max {
 		if isDivisible(i, max) { return i }
 	}
 }
