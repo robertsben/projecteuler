@@ -2,7 +2,6 @@ package main
 
 import (
 	"math"
-	"fmt"
 )
 
 func atkinSieve(max uint32) []uint32 {
